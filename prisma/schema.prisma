@@ -1,0 +1,315 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  MODERATOR
+  FARMER
+  CUSTOMER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum DocumentType {
+  ID
+  BUSINESS_PERMIT
+  TAX_ID
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProductType {
+  RAW
+  PROCESSED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum CropStatus {
+  PLANTED
+  GROWING
+  HARVESTED
+}
+
+enum WarningType {
+  WEATHER
+  PEST
+  DISEASE
+}
+
+enum WarningSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole  @default(CUSTOMER)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  farmerProfile   FarmerProfile?
+  customerProfile CustomerProfile?
+
+  @@map("users")
+}
+
+model FarmerProfile {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  farmName             String
+  farmLocation         String
+  farmSize             String?
+  contactNumber        String
+  walletBalance        Decimal            @default(0) @db.Decimal(10, 2)
+  bankAccountDetails   String?
+  verificationStatus   VerificationStatus @default(PENDING)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[]
+  orders          Order[]
+  crops           CropCycle[]
+  transactions    Transaction[]
+  documents       VerificationDocument[]
+
+  @@map("farmer_profiles")
+}
+
+model VerificationDocument {
+  id              String         @id @default(cuid())
+  farmerId        String
+  documentType    DocumentType
+  documentUrl     String
+  uploadedAt      DateTime       @default(now())
+  status          DocumentStatus @default(PENDING)
+  rejectionReason String?
+
+  farmer          FarmerProfile  @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("verification_documents")
+}
+
+model CustomerProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  defaultAddressId String?
+  contactNumber    String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses Address[]
+  paymentMethods PaymentMethod[]
+  orders    Order[]
+
+  @@map("customer_profiles")
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  customerId  String
+  street      String
+  barangay    String
+  city        String
+  province    String
+  zipCode     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@map("addresses")
+}
+
+model PaymentMethod {
+  id                   String          @id @default(cuid())
+  customerId           String
+  stripePaymentMethodId String
+  last4                String
+  expiry               String
+  isDefault            Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String?
+  parentId    String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  parent   ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children ProductCategory[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  farmerId      String
+  categoryId    String
+  name          String
+  description   String
+  price         Decimal       @db.Decimal(10, 2)
+  stockQuantity Int
+  productType   ProductType
+  unitOfMeasure String
+  isAvailable   Boolean       @default(true)
+  featured      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  farmer   FarmerProfile  @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  category ProductCategory @relation(fields: [categoryId], references: [id])
+  images   ProductImage[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  imageUrl  String
+  altText   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model Order {
+  id             String       @id @default(cuid())
+  customerId     String
+  farmerId       String
+  status         OrderStatus  @default(PENDING)
+  totalAmount    Decimal      @db.Decimal(10, 2)
+  shippingCost   Decimal      @default(0) @db.Decimal(10, 2)
+  paymentStatus  PaymentStatus @default(PENDING)
+  shippingAddress String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  customer    CustomerProfile @relation(fields: [customerId], references: [id])
+  farmer      FarmerProfile   @relation(fields: [farmerId], references: [id])
+  address     Address?        @relation(fields: [shippingAddress], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2)
+  subtotal  Decimal  @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model CropCycle {
+  id                 String     @id @default(cuid())
+  farmerId           String
+  cropName           String
+  plantingDate       DateTime
+  expectedHarvestDate DateTime
+  actualHarvestDate  DateTime?
+  yieldEstimate      String?
+  notes              String?
+  status             CropStatus @default(PLANTED)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  farmer FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("crop_cycles")
+}
+
+model EarlyWarning {
+  id             String         @id @default(cuid())
+  warningType    WarningType
+  severity       WarningSeverity
+  title          String
+  description    String
+  affectedRegions String[]
+  sourceApi      String?
+  issuedAt       DateTime       @default(now())
+  expiresAt      DateTime?
+
+  @@map("early_warnings")
+}
+
+model Transaction {
+  id             String         @id @default(cuid())
+  farmerId       String
+  type           TransactionType
+  amount         Decimal        @db.Decimal(10, 2)
+  description    String
+  relatedOrderId String?
+  createdAt      DateTime       @default(now())
+
+  farmer FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
