@@ -6,8 +6,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
-    const { id } = await params
     console.log("=== GET /api/farmer/products/[id] START ===")
     console.log("Params ID:", id)
 

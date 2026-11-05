@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase"
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -42,7 +43,7 @@ export async function PATCH(
     const { data: order } = await supabase
       .from('orders')
       .select('farmer_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!order || order.farmer_id !== farmer.id) {
@@ -53,7 +54,7 @@ export async function PATCH(
     const { data: updatedOrder, error } = await supabase
       .from('orders')
       .update({ status })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 

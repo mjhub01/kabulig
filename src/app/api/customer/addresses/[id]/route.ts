@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase"
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -27,7 +28,7 @@ export async function DELETE(
     const { data: address } = await supabase
       .from('addresses')
       .select('customer_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!address || address.customer_id !== customer.id) {
@@ -38,7 +39,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('addresses')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       console.error("Address deletion error:", error)
@@ -46,7 +47,7 @@ export async function DELETE(
     }
 
     // If this was the default address, clear it from customer profile
-    if (customer.default_address_id === params.id) {
+    if (customer.default_address_id === id) {
       await supabase
         .from('customer_profiles')
         .update({ default_address_id: null })

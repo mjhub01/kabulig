@@ -96,7 +96,7 @@ export default function FarmerOrdersPage() {
     CANCELLED: "bg-red-100 text-red-800",
   }
 
-  const statusFlow = {
+  const statusFlow: Record<string, string[]> = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["PROCESSING", "CANCELLED"],
     PROCESSING: ["SHIPPED"],

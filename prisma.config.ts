@@ -1,7 +1,2 @@
-import { definePrismaConfig } from "prisma/config";
-
-export default definePrismaConfig({
-  skills: {
-    agents: ["claude", "cursor", "agents", "devin"],
-  },
-});
+// Prisma config disabled - not needed for production
+export default {}

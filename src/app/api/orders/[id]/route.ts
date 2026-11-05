@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -41,7 +42,7 @@ export async function GET(
         ),
         shipping_address_obj:addresses (*)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('customer_id', customer.id)
       .single()
 

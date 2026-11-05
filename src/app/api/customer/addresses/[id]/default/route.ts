@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase"
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -34,14 +35,14 @@ export async function PATCH(
     const { data: address } = await supabase
       .from('addresses')
       .update({ is_default: true })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
     // Update customer's default address
     await supabase
       .from('customer_profiles')
-      .update({ default_address_id: params.id })
+      .update({ default_address_id: id })
       .eq('id', customer.id)
 
     return NextResponse.json({ address }, { status: 200 })

@@ -27,8 +27,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
+          credentials.password as string,
+          user.password as string
         )
 
         if (!isPasswordValid) {
@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role as string
+        session.user.role = token.role as any
         session.user.id = token.id as string
       }
       return session

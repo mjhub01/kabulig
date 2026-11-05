@@ -98,7 +98,7 @@ export async function POST(request: Request) {
 
     // Create an order for each farmer
     for (const [farmerId, farmerItems] of itemsByFarmer) {
-      const farmerTotal = farmerItems.reduce((sum, item) => sum + item.subtotal, 0)
+      const farmerTotal = farmerItems.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
