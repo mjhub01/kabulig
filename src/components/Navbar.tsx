@@ -41,8 +41,8 @@ export function Navbar() {
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-2xl font-bold text-green-700">
-            Kabulig Portal
+          <Link href="/" className="flex items-center">
+            <img src="/kabulig.png" alt="Kabulig" className="h-10 w-auto" />
           </Link>
 
           <div className="flex items-center space-x-4">

@@ -24,10 +24,10 @@ export function FarmerSidebar({ children }: FarmerSidebarProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md min-h-screen fixed left-0 top-0">
         <div className="p-6">
-          <Link href="/" className="text-2xl font-bold text-green-700">
-            Kabulig Portal
+          <Link href="/" className="flex items-center">
+            <img src="/kabulig.png" alt="Kabulig" className="h-10 w-auto" />
           </Link>
-          <p className="text-sm text-gray-600 mt-1">Farmer Dashboard</p>
+          <p className="text-sm text-gray-600 mt-2">Farmer Dashboard</p>
         </div>
 
         <nav className="mt-6">

@@ -8,9 +8,14 @@ const nextConfig = {
         port: '3000',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
   allowedDevOrigins: ['127.0.0.1'],
+  output: 'standalone',
 }
 
 export default nextConfig
