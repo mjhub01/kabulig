@@ -1,8 +1,12 @@
 import Link from "next/link"
+import ImageCarousel from "@/components/ImageCarousel"
 
 export default function Home() {
   return (
     <main className="min-h-screen">
+      {/* Hero Carousel */}
+      <ImageCarousel />
+
       {/* Hero Section with Bridge Story */}
       <section className="relative bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
@@ -12,7 +16,7 @@ export default function Home() {
               Kabulig Portal
             </h1>
             <p className="text-xl md:text-2xl mb-4 font-semibold text-green-100">
-              Your Bridge from Farm to Market
+              Empowering Farmers • Connecting Communities • Sustaining Future
             </p>
             <div className="mt-8 space-y-4 text-lg md:text-xl text-green-50">
               <p>
@@ -48,7 +52,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pillars Preview */}
+      {/* Three Pillars */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
@@ -57,27 +61,27 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <div className="text-green-600 text-4xl mb-4">🌾</div>
-              <h3 className="text-xl font-bold mb-2">Farm to Market</h3>
+              <h3 className="text-xl font-bold mb-2">Empowering Farmers</h3>
               <p className="text-gray-600">
-                Direct connection between farmers and consumers. Fresh produce, fair prices, sustainable agriculture.
+                Farm to Market - Direct connection between farmers and consumers. Fresh produce, fair prices, sustainable agriculture.
               </p>
-              <span className="inline-block mt-4 text-green-600 font-semibold">Coming Soon</span>
+              <span className="inline-block mt-4 text-green-600 font-semibold">Active Now</span>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <div className="text-blue-600 text-4xl mb-4">📚</div>
-              <h3 className="text-xl font-bold mb-2">Education</h3>
+              <h3 className="text-xl font-bold mb-2">Connecting Communities</h3>
               <p className="text-gray-600">
-                Agricultural knowledge sharing, training programs, and resources for farmers and enthusiasts.
+                Education - Agricultural knowledge sharing, training programs, and resources for farmers and enthusiasts.
               </p>
-              <span className="inline-block mt-4 text-gray-400 font-semibold">Coming Later</span>
+              <span className="inline-block mt-4 text-gray-400 font-semibold">Coming Soon</span>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <div className="text-purple-600 text-4xl mb-4">🏞️</div>
-              <h3 className="text-xl font-bold mb-2">Tourism</h3>
+              <h3 className="text-xl font-bold mb-2">Sustaining Future</h3>
               <p className="text-gray-600">
-                Agri-tourism experiences, farm visits, and cultural immersion in agricultural communities.
+                Tourism - Agri-tourism experiences, farm visits, and cultural immersion in agricultural communities.
               </p>
-              <span className="inline-block mt-4 text-gray-400 font-semibold">Coming Later</span>
+              <span className="inline-block mt-4 text-gray-400 font-semibold">Coming Soon</span>
             </div>
           </div>
         </div>
