@@ -43,6 +43,6 @@
     "tsx": "^4.23.15"
   },
   "overrides": {
-    "minimatch": "^9.0.0"
+    "minimatch": "^11.0.1"
   }
 }
