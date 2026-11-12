@@ -5,7 +5,9 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Carousel */}
-      <ImageCarousel />
+      <div className="container mx-auto px-4 py-8">
+        <ImageCarousel />
+      </div>
 
       {/* Hero Section with Bridge Story */}
       <section className="relative bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white">
