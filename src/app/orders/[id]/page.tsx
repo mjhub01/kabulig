@@ -36,17 +36,21 @@ interface Order {
   }
 }
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [id, setId] = useState<string>("")
 
   useEffect(() => {
-    loadOrder()
-  }, [params.id])
+    params.then(p => {
+      setId(p.id)
+      loadOrder(p.id)
+    })
+  }, [params])
 
-  const loadOrder = async () => {
+  const loadOrder = async (orderId: string) => {
     try {
       const session = await auth()
       if (!session?.user) {
@@ -54,7 +58,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         return
       }
 
-      const response = await fetch(`/api/orders/${params.id}`)
+      const response = await fetch(`/api/orders/${orderId}`)
       const data = await response.json()
 
       if (response.ok) {
