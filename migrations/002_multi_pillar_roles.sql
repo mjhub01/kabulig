@@ -1,0 +1,22 @@
+-- Apply after the original schema.sql when upgrading an existing database.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status TEXT NOT NULL DEFAULT 'active';
+DO $$ BEGIN ALTER TABLE users ADD CONSTRAINT users_account_status_check CHECK (account_status IN ('active','suspended','closed')); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE TABLE IF NOT EXISTS pillars(id SMALLSERIAL PRIMARY KEY,slug TEXT NOT NULL UNIQUE,name TEXT NOT NULL UNIQUE,sort_order SMALLINT NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS roles(id SMALLSERIAL PRIMARY KEY,code TEXT NOT NULL UNIQUE,name TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',is_platform_role BOOLEAN NOT NULL DEFAULT FALSE,sort_order SMALLINT NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS pillar_roles(pillar_id SMALLINT NOT NULL REFERENCES pillars(id) ON DELETE CASCADE,role_id SMALLINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,approval_required BOOLEAN NOT NULL DEFAULT FALSE,PRIMARY KEY(pillar_id,role_id));
+CREATE TABLE IF NOT EXISTS user_pillar_roles(user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,pillar_id SMALLINT NOT NULL REFERENCES pillars(id) ON DELETE CASCADE,role_id SMALLINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,status TEXT NOT NULL DEFAULT 'active' CHECK(status IN('pending','active','disabled','suspended')),requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(user_id,pillar_id,role_id),FOREIGN KEY(pillar_id,role_id) REFERENCES pillar_roles(pillar_id,role_id) ON DELETE CASCADE);
+ALTER TABLE user_pillar_roles ADD COLUMN IF NOT EXISTS profile_data JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE TABLE IF NOT EXISTS user_roles(user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,role_id SMALLINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),assigned_by BIGINT REFERENCES users(id) ON DELETE SET NULL,PRIMARY KEY(user_id,role_id));
+INSERT INTO pillars(slug,name,sort_order) VALUES('agri-fishery','Agri-Fishery',1),('tourism','Tourism',2),('education','Education',3) ON CONFLICT(slug) DO NOTHING;
+INSERT INTO roles(code,name,description,is_platform_role,sort_order) VALUES('consumer_buyer','Consumer / Buyer','Shop for agricultural and fishery products.',FALSE,1),('farmer_worker','Farmer / Worker','Offer farm skills and apply for agricultural work.',FALSE,2),('farm_owner','Farm Owner / Employer','Manage farm listings and post work.',FALSE,3),('tourist','Tourist','Book tourism activities and stays.',FALSE,1),('tourism_host','Tourism Host','Publish and manage tourism experiences.',FALSE,2),('learner','Learner','Enroll in courses and track learning.',FALSE,1),('instructor','Instructor','Publish courses and teach learners.',FALSE,2),('admin','Administrator','Manage the Kabulig Portal.',TRUE,1),('support','Support','Assist portal users.',TRUE,2) ON CONFLICT(code) DO NOTHING;
+INSERT INTO pillar_roles(pillar_id,role_id,approval_required) SELECT p.id,r.id,r.code IN('farmer_worker','farm_owner','tourism_host','instructor') FROM pillars p JOIN roles r ON r.code IN('consumer_buyer','farmer_worker','farm_owner','tourist','tourism_host','learner','instructor') WHERE (p.slug='agri-fishery' AND r.code IN('consumer_buyer','farmer_worker','farm_owner')) OR (p.slug='tourism' AND r.code IN('tourist','tourism_host')) OR (p.slug='education' AND r.code IN('learner','instructor')) ON CONFLICT DO NOTHING;
+-- Keep legacy administrator accounts and map other existing users to buyer access.
+INSERT INTO user_roles(user_id,role_id) SELECT u.id,r.id FROM users u JOIN roles r ON r.code='admin' WHERE u.role='admin' ON CONFLICT DO NOTHING;
+INSERT INTO user_pillar_roles(user_id,pillar_id,role_id,status) SELECT u.id,p.id,r.id,CASE WHEN r.code='consumer_buyer' THEN 'active' ELSE 'pending' END FROM users u JOIN pillars p ON p.slug='agri-fishery' JOIN roles r ON r.code=CASE WHEN u.role='provider' THEN 'farm_owner' ELSE 'consumer_buyer' END ON CONFLICT DO NOTHING;
+
+-- Give every existing and future administrator active access to all pillar roles.
+INSERT INTO user_pillar_roles(user_id,pillar_id,role_id,status)
+SELECT ur.user_id,pr.pillar_id,pr.role_id,'active'
+FROM user_roles ur JOIN roles ar ON ar.id=ur.role_id AND ar.code='admin'
+CROSS JOIN pillar_roles pr
+ON CONFLICT(user_id,pillar_id,role_id) DO UPDATE SET status='active',updated_at=NOW();

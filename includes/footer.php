@@ -1,0 +1,3 @@
+<footer><div class="container footer-inner"><a class="navbar-brand d-flex align-items-center" href="/" aria-label="Kabulig Portal home"><img class="brand-logo footer-logo" src="/kabulig.png" alt="Kabulig Portal"></a><p>Local roots. Shared growth.</p><div class="footer-links"><a href="/agri-fishery/market.php">Agri-Fishery</a><a href="/tourism/experiences.php">Tourism</a><a href="/education/courses.php">Education</a><a href="mailto:hello@kabulig.local">Contact</a></div><small>© <?= date('Y') ?> Kabulig Portal · Made for community</small></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="/assets/app.js"></script>
+</body></html>

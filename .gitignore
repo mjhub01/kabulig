@@ -1,0 +1,9 @@
+.kabulig-postgres/
+postgres-local.log
+.env
+pg_hba-workspace.conf
+postgres.log
+postgres-local.log
+sess_*
+/var/sessions/*
+Active
