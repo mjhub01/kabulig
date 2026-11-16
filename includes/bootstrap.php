@@ -19,13 +19,41 @@ function database(): ?PDO {
     static $attempted = false;
     if ($attempted) return $pdo;
     $attempted = true;
-    $dsn = getenv('DATABASE_URL');
-    if (!$dsn && (getenv('DB_HOST') || getenv('DB_NAME'))) {
+    $databaseUrl = getenv('DATABASE_URL');
+    $dbUser = getenv('DB_USER') ?: '';
+    $dbPassword = getenv('DB_PASSWORD') ?: '';
+    if ($databaseUrl) {
+        $parts = parse_url($databaseUrl);
+        if ($parts === false || !in_array(strtolower((string)($parts['scheme'] ?? '')), ['postgres', 'postgresql'], true) || empty($parts['host'])) {
+            throw new RuntimeException('DATABASE_URL must be a valid PostgreSQL connection URL.');
+        }
+        $databaseName = ltrim((string)($parts['path'] ?? ''), '/');
+        if ($databaseName === '') throw new RuntimeException('DATABASE_URL must include a database name.');
+        $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s', $parts['host'], $parts['port'] ?? '5432', $databaseName);
+        $query = [];
+        parse_str((string)($parts['query'] ?? ''), $query);
+        $sslmode = $query['sslmode'] ?? getenv('DB_SSLMODE');
+        $dbUser = rawurldecode((string)($parts['user'] ?? $dbUser));
+        $dbPassword = rawurldecode((string)($parts['pass'] ?? $dbPassword));
+        if ($sslmode !== false && $sslmode !== null && $sslmode !== '') {
+            if (!in_array($sslmode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
+                throw new RuntimeException('DATABASE_URL sslmode must be a supported PostgreSQL SSL mode.');
+            }
+            $dsn .= ';sslmode='.$sslmode;
+        }
+    } elseif (getenv('DB_HOST') || getenv('DB_NAME')) {
         $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s', getenv('DB_HOST') ?: '127.0.0.1', getenv('DB_PORT') ?: '5432', getenv('DB_NAME') ?: 'kabulig');
+        $sslmode = getenv('DB_SSLMODE');
+        if ($sslmode !== false && $sslmode !== '') {
+            if (!in_array($sslmode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
+                throw new RuntimeException('DB_SSLMODE must be a supported PostgreSQL SSL mode.');
+            }
+            $dsn .= ';sslmode='.$sslmode;
+        }
     }
     if (!$dsn) return null;
     if (!extension_loaded('pdo_pgsql')) throw new RuntimeException('PHP pdo_pgsql extension is required for PostgreSQL.');
-    $pdo = new PDO($dsn, getenv('DB_USER') ?: '', getenv('DB_PASSWORD') ?: '', [
+    $pdo = new PDO($dsn, $dbUser, $dbPassword, [
         PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES=>false,
@@ -81,3 +109,4 @@ function portal_items(): array {
     }
     return $items;
 }
+
