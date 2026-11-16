@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: https://github.com/mjhub01/kabulig.git#main
+      dockerfile: Dockerfile.vps
+    restart: unless-stopped
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: require
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-ec"]
+    command: |
+      cat > /etc/caddy/Caddyfile <<'CADDY'
+      kabulig.net, www.kabulig.net, staging.kabulig.net {
+        reverse_proxy app:80
+      }
+      CADDY
+      exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:
+
