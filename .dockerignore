@@ -1,0 +1,9 @@
+.env
+.env.*
+.git
+.gitignore
+.kabulig-postgres
+*.log
+var/sessions
+sess_*
+
